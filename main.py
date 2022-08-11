@@ -24,6 +24,9 @@ logger = Logger(log_location='./savify_logs', log_level=None) # Silent output
 
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
 s = Savify(spotify_obj=sp, path_holder=PathHolder(downloads_path="../music"), logger=logger)
+
+
+
 user_follow = sp.current_user_followed_artists()
 recommendations = []
 continue_downloads = True
