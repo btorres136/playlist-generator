@@ -48,7 +48,7 @@ class Savify:
     def __init__(self, api_credentials=None, quality=Quality.BEST, download_format=Format.MP3,
                  group=None, path_holder: PathHolder = None, retry: int = 3,
                  ydl_options: dict = None, skip_cover_art: bool = False, logger: Logger = None,
-                 ffmpeg_location: str = 'ffmpeg') -> None:
+                 ffmpeg_location: str = 'ffmpeg', spotify_obj=None) -> None:
 
         self.download_format = download_format
         self.ffmpeg_location = ffmpeg_location
@@ -65,13 +65,16 @@ class Savify:
         self.path_holder = path_holder or PathHolder()
         self.logger = logger or Logger(self.path_holder.data_path)
 
-        if api_credentials is None:
-            if not check_env():
-                raise SpotifyApiCredentialsNotSetError
+        if spotify_obj is None:
+            if api_credentials is None:
+                if not check_env():
+                    raise SpotifyApiCredentialsNotSetError
 
-            self.spotify = Spotify()
+                self.spotify = Spotify()
+            else:
+                self.spotify = Spotify(api_credentials=api_credentials)
         else:
-            self.spotify = Spotify(api_credentials=api_credentials)
+            self.spotify = Spotify(spotify_obj=spotify_obj)
 
         if not check_ffmpeg() and self.ffmpeg_location == 'ffmpeg':
             raise FFmpegNotInstalledError
@@ -117,11 +120,16 @@ class Savify:
         return result
 
     def download(self, query, query_type=Type.TRACK, create_m3u=False, artist_albums: bool = False) -> None:
-        try:
-            queue = self._parse_query(query, query_type=query_type, artist_albums=artist_albums)
-            self.queue_size += len(queue)
-        except requests.exceptions.ConnectionError or URLError:
-            raise InternetConnectionError
+        max_tries = 10
+        for i in range(max_tries):
+            try:
+                queue = self._parse_query(query, query_type=query_type, artist_albums=artist_albums)
+                self.queue_size += len(queue)
+                break
+            except requests.exceptions.ConnectionError or URLError:
+                print("An error have occurred, trying to reconnect...")
+            if(i == 9):
+                raise InternetConnectionError
 
         if not (len(queue) > 0):
             self.logger.info('Nothing found using the given query.')
