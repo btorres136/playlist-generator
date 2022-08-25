@@ -2,6 +2,8 @@
 
 __all__ = ['Savify']
 
+from platform import platform
+from re import T
 import time
 from multiprocessing import cpu_count
 from multiprocessing.dummy import Pool as ThreadPool
@@ -48,7 +50,7 @@ class Savify:
     def __init__(self, api_credentials=None, quality=Quality.BEST, download_format=Format.MP3,
                  group=None, path_holder: PathHolder = None, retry: int = 3,
                  ydl_options: dict = None, skip_cover_art: bool = False, logger: Logger = None,
-                 ffmpeg_location: str = 'ffmpeg', spotify_obj=None) -> None:
+                 ffmpeg_location: str = 'ffmpeg', spotify_obj=None, yt_api=None) -> None:
 
         self.download_format = download_format
         self.ffmpeg_location = ffmpeg_location
@@ -59,6 +61,7 @@ class Savify:
         self.completed = 0
         self.retry = retry
         self.group = group
+        self.yt_api = yt_api
 
         # Config or defaults...
         self.ydl_options = ydl_options or dict()
@@ -80,7 +83,7 @@ class Savify:
             raise FFmpegNotInstalledError
 
         clean(self.path_holder.get_temp_dir())
-        self.check_for_updates()
+        #self.check_for_updates()
 
     def check_for_updates(self) -> None:
         self.logger.info('Checking for updates...')
@@ -101,6 +104,10 @@ class Savify:
         if validators.url(query) or query[:8] == 'spotify:':
             if tldextract.extract(query).domain == Platform.SPOTIFY:
                 result = self.spotify.link(query, artist_albums=artist_albums)
+            elif tldextract.extract(query).domain == Platform.YOUTUBE:
+                video = self.yt_api.get_video_by_id(video_id=query[31:]).to_dict()["items"][0]
+                track = Track(video, platform=Platform.YOUTUBE)
+                result.append(track)
             else:
                 raise UrlNotSupportedError(query)
 
@@ -194,6 +201,8 @@ class Savify:
         extractor = 'ytsearch'
         if track.platform == Platform.SPOTIFY:
             query = track.url if track.track_type == Type.EPISODE else f'{extractor}:{str(track)} audio'
+        elif track.platform == Platform.YOUTUBE:
+            query = track.url
         else:
             query = ''
 
