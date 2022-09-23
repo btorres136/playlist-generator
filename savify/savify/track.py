@@ -2,6 +2,7 @@ from typing import Callable
 from uuid import uuid1
 
 from .types import Type, Platform
+import unidecode
 
 
 class Track:
@@ -99,7 +100,7 @@ class Track:
                f'Disc: {self.disc_number}\nCover Art: {self.cover_art_url}\nLink: {self.url}\nUri: {self.uri}'
 
     def __str__(self) -> str:
-        return f'{self.artists[0]} - {self.name}'
+        return f'{unidecode.unidecode(self.artists[0])} - {unidecode.unidecode(self.name)}'
 
 
 def _spotify_artist_names(artist_data) -> list:

@@ -24,6 +24,7 @@ from .track import Track
 from .logger import Logger
 from .exceptions import FFmpegNotInstalledError, SpotifyApiCredentialsNotSetError, UrlNotSupportedError, \
     YoutubeDlExtractionError, InternetConnectionError
+import unidecode
 
 
 def _sort_dir(track: Track, group: str) -> str:
@@ -134,7 +135,7 @@ class Savify:
                 self.queue_size += len(queue)
                 break
             except requests.exceptions.ConnectionError or URLError:
-                print("An error have occurred, trying to reconnect...")
+                self.logger.error("An error have occurred, trying to reconnect...")
             if(i == 9):
                 raise InternetConnectionError
 
@@ -167,18 +168,21 @@ class Savify:
                 else:
                     playlist = track.name
 
-            m3u = f'#EXTM3U\n#PLAYLIST:{playlist}\n'
-            m3u_location = self.path_holder.get_download_dir() / f'{playlist}.m3u'
+            #m3u = f'#EXTM3U\n#PLAYLIST:{playlist}\n'
+            m3u = ''
+            m3u_location = self.path_holder.get_download_dir() / f'{unidecode.unidecode(playlist)}.m3u8'
+            m3u_save = 'Playlists/'+unidecode.unidecode(playlist)+'.m3u8'
 
             for job in successful_jobs:
                 track = job['track']
                 location = job['location']
-                m3u += f'#EXTINF:{str(queue.index(track))},{str(track)}\n'
+                #m3u += f'#EXTINF:{str(queue.index(track))},{str(track)}\n'
                 from os.path import relpath
-                m3u += f'{relpath(location, m3u_location.parent)}\n'
+                m3u += f'/Music/{relpath(location, m3u_location.parent)}\n'
 
             self.logger.info('Creating the M3U playlist file..')
-            with open(m3u_location, 'w') as m3u_file:
+            #with open(m3u_location, 'w') as m3u_file:
+            with open(m3u_save, 'w') as m3u_file:
                 m3u_file.write(m3u)
 
         self.logger.info('Cleaning up...')
@@ -248,7 +252,8 @@ class Savify:
                 '-metadata', f'title={track.name}',
                 '-metadata', f'album={track.album_name}',
                 '-metadata', f'date={track.release_date}',
-                '-metadata', f'artist={"/".join(track.artists)}',
+                #'-metadata', f'artist={"/".join(track.artists)}',
+                '-metadata', f'artist={track.artists[0]}',
                 '-metadata', f'disc={track.disc_number}',
                 '-metadata', f'track={track.track_number}/{track.album_track_count}',
             ],
@@ -274,6 +279,11 @@ class Savify:
                     ydl.download([query])
                     if check_file(Path(output_temp)):
                         break
+                    elif attempt > self.retry:
+                        status["returncode"] = 1
+                        status["error"] = "Song not found."
+                        return status
+
 
             except YoutubeDlExtractionError as ex:
                 if attempt > self.retry:

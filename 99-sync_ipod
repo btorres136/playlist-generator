@@ -1,0 +1,14 @@
+#!/bin/bash
+# usbmount needs to be installed in order to use this.
+# Put this file or create a link to it under /etc/usbmount/mount.d.
+# Call the file 99-sync_music
+
+if [[ $UM_DEVICE == "/dev/sdb2" ]]; then
+	rsync -rtv /home/ubuntu/music/ $UM_MOUNTPOINT/Music > /home/ubuntu/sync_log
+	rsync -rtv /home/ubuntu/dev/playlist-generator/Playlists/ $UM_MOUNTPOINT/Playlists >> /home/ubuntu/sync_log
+	echo "Syncing..." >> /home/ubuntu/sync_log
+	sync
+	echo "Done Syncing..." >> /home/ubuntu/sync_log
+	eject /dev/sdb2
+	echo "/dev/sdb2 Ejected..." >> /home/ubuntu/sync_log
+fi
