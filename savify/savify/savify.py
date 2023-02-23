@@ -10,6 +10,8 @@ from multiprocessing.dummy import Pool as ThreadPool
 from pathlib import Path
 from shutil import move, Error as ShutilError
 from urllib.error import URLError
+import os
+import re
 
 import validators
 import tldextract
@@ -63,6 +65,7 @@ class Savify:
         self.retry = retry
         self.group = group
         self.yt_api = yt_api
+        self.songsList = open("SongsList.txt", mode="wb")
 
         # Config or defaults...
         self.ydl_options = ydl_options or dict()
@@ -86,6 +89,18 @@ class Savify:
         clean(self.path_holder.get_temp_dir())
         #self.check_for_updates()
 
+    def cleanup(self):
+        self.songsList.close()
+        songList = open("SongsList.txt", "r").read().splitlines()
+        songs = os.listdir(str(self.path_holder.downloads_path))
+        for song in songs:
+            for songl in songList:
+                if ascii(songl.strip())[1:-1] == ascii(song.strip())[1:-1]:
+                    break
+                elif songl == songList[-1]:
+                    self.logger.info("Removing: " + ascii(song.strip())[1:-1])
+                    os.remove(str(self.path_holder.downloads_path)+"/"+song)
+                    
     def check_for_updates(self) -> None:
         self.logger.info('Checking for updates...')
         latest_ver = requests.get('https://api.github.com/repos/LaurenceRawlings/savify/releases/latest').json()[
@@ -212,6 +227,10 @@ class Savify:
 
         output = self.path_holder.get_download_dir() / f'{_sort_dir(track, self.group)}' / safe_path_string(
             f'{str(track)}.{self.download_format}')
+
+        temp_name = re.sub(r'[\/?:<>*\\"]', "_", str(unidecode.unidecode(track.name)))
+        temp_artist = re.sub(r'[\/?:<>*\\"]', "_", str(unidecode.unidecode(track.artists[0])))
+        self.songsList.write(str(temp_artist + " - " + temp_name + "." + self.download_format + "\n").encode('utf-8'))
 
         output_temp = f'{str(self.path_holder.get_temp_dir())}/{track.id}.%(ext)s'
 
