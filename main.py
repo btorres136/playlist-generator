@@ -7,13 +7,10 @@ from savify.savify import Savify
 from savify.savify.utils import PathHolder
 from savify.savify.logger import Logger
 from savify.savify.types import *
-from database import database
 from pyyoutube import Api
 import os
 
 load_dotenv()
-database = database()
-database.init_db()
 
 scope = "user-follow-read user-top-read playlist-read-collaborative playlist-read-private user-library-read"
 
@@ -25,8 +22,7 @@ yt_api = Api(api_key=yt_api_key)
 logger = Logger(log_location='./savify_logs', log_level=None) # Silent output
 
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
-s = Savify(spotify_obj=sp, path_holder=PathHolder(downloads_path="../music"), logger=logger)
-#s_yt = Savify(spotify_obj=sp, path_holder=PathHolder(downloads_path="../podcasts/yt"), logger=logger, yt_api=yt_api)
+s = Savify(spotify_obj=sp, path_holder=PathHolder(downloads_path="../../music"), logger=logger)
 
 def download_playlist():
   offset = 0
@@ -42,8 +38,8 @@ def download_saved_tracks():
   user_tracks = sp.current_user_saved_tracks(limit=50)
   while len(user_tracks["items"]) != 0:
     user_tracks = sp.current_user_saved_tracks(limit=50, offset=offset)
-    for tracks in user_tracks["items"]:
-      s.download(tracks["track"]["external_urls"]["spotify"])
+    for track in user_tracks["items"]:
+      s.download(track["track"]["external_urls"]["spotify"])
     offset += 50
 
 def download_saved_albums():
@@ -59,3 +55,4 @@ download_saved_tracks()
 download_playlist()
 download_saved_albums()
 
+s.cleanup()
