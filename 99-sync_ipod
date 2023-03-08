@@ -2,8 +2,8 @@
 # usbmount needs to be installed in order to use this.
 # Put this file or create a link to it under /etc/usbmount/mount.d.
 # Call the file 99-sync_music
-if [[ $UM_DEVICE == "/dev/sdc2" ]]; then
-	rsync -Phrtv --modify-window=1 --delete-before /home/ubuntu/music/ $UM_MOUNTPOINT/Music &> /home/ubuntu/sync_log
+if [[ $UM_DEVICE == "/dev/sdb2" ]]; then
+	rsync -Phrtv --modify-window=1 --delete-before /home/ubuntu/media/music/ $UM_MOUNTPOINT/Music &> /home/ubuntu/sync_log
 	rsync -Phrtv --modify-window=1 --delete-before /home/ubuntu/dev/playlist-generator/Playlists/ $UM_MOUNTPOINT/Playlists &>> /home/ubuntu/sync_log
 	echo "Syncing..." >> /home/ubuntu/sync_log
 	sync
