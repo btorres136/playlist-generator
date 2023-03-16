@@ -50,7 +50,7 @@ def _progress(data) -> None:
 
 
 class Savify:
-    def __init__(self, api_credentials=None, quality=Quality.BEST, download_format=Format.MP3,
+    def __init__(self, m3u_save_path='Playlists/', api_credentials=None, quality=Quality.BEST, download_format=Format.MP3,
                  group=None, path_holder: PathHolder = None, retry: int = 3,
                  ydl_options: dict = None, skip_cover_art: bool = False, logger: Logger = None,
                  ffmpeg_location: str = 'ffmpeg', spotify_obj=None, yt_api=None) -> None:
@@ -66,6 +66,9 @@ class Savify:
         self.group = group
         self.yt_api = yt_api
         self.songsList = open("SongsList.txt", mode="wb")
+        self.playlistList = open("PlaylistList.txt", mode="wb")
+        self.m3u_save_path = m3u_save_path
+
 
         # Config or defaults...
         self.ydl_options = ydl_options or dict()
@@ -91,6 +94,7 @@ class Savify:
 
     def cleanup(self):
         self.songsList.close()
+        self.playlistList.close()
         songList = open("SongsList.txt", "r").read().splitlines()
         songs = os.listdir(str(self.path_holder.downloads_path))
         for song in songs:
@@ -186,7 +190,8 @@ class Savify:
             #m3u = f'#EXTM3U\n#PLAYLIST:{playlist}\n'
             m3u = ''
             m3u_location = self.path_holder.get_download_dir() / f'{unidecode.unidecode(playlist)}.m3u8'
-            m3u_save = 'Playlists/'+unidecode.unidecode(playlist)+'.m3u8'
+            m3u_save = self.m3u_save_path+unidecode.unidecode(playlist)+'.m3u8'
+            #self.playlistList.write(playlist)
 
             for job in successful_jobs:
                 track = job['track']

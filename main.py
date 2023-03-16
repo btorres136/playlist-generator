@@ -18,12 +18,13 @@ client_id = os.environ['SPOTIPY_CLIENT_ID']
 client_secret = os.environ['SPOTIPY_CLIENT_SECRET']
 yt_api_key = os.environ['YT_API_KEY']
 downloads_path = os.environ['DOWNLOADS_PATH']
+m3u_save = os.environ['M3U_SAVE_PATH']
 yt_api = Api(api_key=yt_api_key)
 
 logger = Logger(log_location='.', log_level=None) # Silent output
 
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
-s = Savify(spotify_obj=sp, path_holder=PathHolder(downloads_path=downloads_path), logger=logger)
+s = Savify(spotify_obj=sp, path_holder=PathHolder(downloads_path=downloads_path), logger=logger, m3u_save_path=m3u_save)
 
 def download_playlist():
   offset = 0
